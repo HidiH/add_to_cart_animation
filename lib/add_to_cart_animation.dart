@@ -1,14 +1,10 @@
-import 'dart:math';
-
 import 'drag_to_cart_animation_options.dart';
 
-import 'jump_animation_options.dart';
 import 'add_to_cart_icon.dart';
 import 'globalkeyext.dart';
 import 'package:flutter/material.dart';
 
 export 'add_to_cart_icon.dart';
-export 'jump_animation_options.dart';
 export 'drag_to_cart_animation_options.dart';
 
 class _PositionedAnimationModel {
@@ -17,12 +13,11 @@ class _PositionedAnimationModel {
   Offset imageSourcePoint = Offset.zero;
   Offset imageDestPoint = Offset.zero;
   Size imageSourceSize = Size.zero;
-  Size imageDestSize = Size.zero;
-  bool rotation = false;
   double opacity = 0.85;
   late Container container;
   Duration duration = Duration.zero;
-  Curve curve = Curves.easeIn;
+  Curve curve = Curves.easeInOut;
+  double destScale = 0.5;
 }
 
 /// An add to cart animation which provide you an animation by sliding the product to cart in the Flutter app
@@ -37,17 +32,10 @@ class AddToCartAnimation extends StatefulWidget {
   /// Add to cart animation drags the given widget to the cart based on their location via global keys
   final Function(Future<void> Function(GlobalKey)) createAddToCartAnimation;
 
-  /// What Should the given widget's height while dragging to the cart
-  final double height;
-
-  /// What Should the given widget's width while dragging to the cart
-  final double width;
-
   /// What Should the given widget's opacity while dragging to the cart
   final double opacity;
 
-  /// Should the given widget jump before the dragging
-  final JumpAnimationOptions jumpAnimation;
+  final double destScale;
 
   /// The animation options while given widget sliding to cart
   final DragToCartAnimationOptions dragAnimation;
@@ -57,10 +45,8 @@ class AddToCartAnimation extends StatefulWidget {
     required this.child,
     required this.cartKey,
     required this.createAddToCartAnimation,
-    this.height = 30,
-    this.width = 30,
     this.opacity = 0.85,
-    this.jumpAnimation = const JumpAnimationOptions(),
+    this.destScale = 0.5,
     this.dragAnimation = const DragToCartAnimationOptions(),
   }) : super(key: key);
 
@@ -90,36 +76,19 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
                         top: model.animationActive
                             ? model.imageDestPoint.dx
                             : model.imageSourcePoint.dx,
-                        left: model.animationActive
-                            ? model.imageDestPoint.dy
-                            : model.imageSourcePoint.dy,
-                        height: model.animationActive
-                            ? model.imageDestSize.height
-                            : model.imageSourceSize.height,
-                        width: model.animationActive
-                            ? model.imageDestSize.width
-                            : model.imageSourceSize.width,
+                        left: model.imageSourcePoint.dy,
+                        height: model.imageSourceSize.height,
+                        width: model.imageSourceSize.width,
                         duration: model.duration,
                         curve: model.curve,
-                        child: model.rotation
-                            ? TweenAnimationBuilder(
-                                tween: Tween<double>(begin: 0, end: pi * 2),
-                                duration: model.duration,
-                                child: model.container,
-                                builder: (context, double value, widget) {
-                                  return Transform.rotate(
-                                    angle: value,
-                                    child: Opacity(
-                                      opacity: model.opacity,
-                                      child: widget,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Opacity(
-                                opacity: model.opacity,
-                                child: model.container,
-                              ),
+                        child: AnimatedScale(
+                          scale: model.animationActive ? model.destScale : 1.0,
+                          duration: model.duration,
+                          child: Opacity(
+                                  opacity: model.opacity,
+                                  child: model.container,
+                                ),
+                        ),
                       )
                     : Container())
                 .toList(),
@@ -131,26 +100,20 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
 
   Future<void> runAddToCartAnimation(GlobalKey widgetKey) async {
     _PositionedAnimationModel animationModel = _PositionedAnimationModel()
-      ..rotation = false
+      .. destScale = widget.destScale
       ..opacity = widget.opacity;
 
     animationModel.imageSourcePoint = Offset(
         widgetKey.globalPaintBounds!.top, widgetKey.globalPaintBounds!.left);
 
-    // Improvement/Suggestion 1: Provinding option, in order to, use/or not initial "jumping" on image
-    var startingHeight = widget.jumpAnimation.active
-        ? widgetKey.currentContext!.size!.height
-        : 0;
+/*
     animationModel.imageDestPoint = Offset(
-        widgetKey.globalPaintBounds!.top - (startingHeight + widget.height),
-        widgetKey.globalPaintBounds!.left);
+        widgetKey.globalPaintBounds!.top + this.widget.cartKey.currentContext!.size!.height*10,
+        widgetKey.globalPaintBounds!.left + this.widget.cartKey.currentContext!.size!.width*10);
+*/
 
     animationModel.imageSourceSize = Size(widgetKey.currentContext!.size!.width,
         widgetKey.currentContext!.size!.height);
-
-    animationModel.imageDestSize = Size(
-        widgetKey.currentContext!.size!.width + widget.width,
-        widgetKey.currentContext!.size!.height + widget.height);
 
     animationModels.add(animationModel);
     // Improvement/Suggestion 2: Changing the animationModel.child from Image to gkImageContainer
@@ -164,26 +127,24 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
 
     await Future.delayed(Duration(milliseconds: 75));
 
-    animationModel.curve = widget.jumpAnimation.curve;
-    animationModel.duration =
-        widget.jumpAnimation.duration; // This is for preview mode
     animationModel.animationActive = true; // That's start the animation.
     setState(() {});
 
     await Future.delayed(animationModel.duration);
     // Drag to cart animation
     animationModel.curve = widget.dragAnimation.curve;
-    animationModel.rotation = widget.dragAnimation.rotation;
     animationModel.duration =
         widget.dragAnimation.duration; // this is for add to button mode
 
     animationModel.imageDestPoint = Offset(
-        this.widget.cartKey.globalPaintBounds!.top,
+        this.widget.cartKey.globalPaintBounds!.top /*- widgetKey.globalPaintBounds!.top*/,
         this.widget.cartKey.globalPaintBounds!.left);
 
+/*
     animationModel.imageDestSize = Size(
         this.widget.cartKey.currentContext!.size!.width,
         this.widget.cartKey.currentContext!.size!.height);
+*/
 
     setState(() {});
 

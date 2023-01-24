@@ -41,13 +41,10 @@ class MyHomePageState extends State<MyHomePage> {
     return AddToCartAnimation(
       // To send the library the location of the Cart icon
       cartKey: cartKey,
-      height: 30,
-      width: 30,
       opacity: 0.85,
       dragAnimation: const DragToCartAnimationOptions(
-        rotation: true,
+        duration: Duration(seconds: 5),
       ),
-      jumpAnimation: const JumpAnimationOptions(),
       createAddToCartAnimation: (runAddToCartAnimation) {
         // You can run the animation by addToCartAnimationMethod, just pass trough the the global key of  the image as parameter
         this.runAddToCartAnimation = runAddToCartAnimation;
