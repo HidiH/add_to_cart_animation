@@ -41,7 +41,6 @@ class MyHomePageState extends State<MyHomePage> {
     return AddToCartAnimation(
       // To send the library the location of the Cart icon
       cartKey: cartKey,
-      opacity: 0.85,
       dragAnimation: const DragToCartAnimationOptions(
         duration: Duration(seconds: 5),
       ),

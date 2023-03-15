@@ -13,7 +13,6 @@ class _PositionedAnimationModel {
   Offset imageSourcePoint = Offset.zero;
   Offset imageDestPoint = Offset.zero;
   Size imageSourceSize = Size.zero;
-  double opacity = 0.85;
   late Container container;
   Duration duration = Duration.zero;
   Curve curve = Curves.easeInOut;
@@ -34,9 +33,6 @@ class AddToCartAnimation extends StatefulWidget {
   /// Add to cart animation drags the given widget to the cart based on their location via global keys
   final Function(Future<void> Function(GlobalKey)) createAddToCartAnimation;
 
-  /// What Should the given widget's opacity while dragging to the cart
-  final double opacity;
-
   final double destScale;
 
   final double offsetX;
@@ -50,7 +46,6 @@ class AddToCartAnimation extends StatefulWidget {
     required this.child,
     required this.cartKey,
     required this.createAddToCartAnimation,
-    this.opacity = 0.85,
     this.destScale = 0.5,
     this.offsetX = 0.0,
     this.offsetY = 0.0,
@@ -91,10 +86,7 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
                         child: AnimatedScale(
                           scale: model.animationActive ? model.destScale : 1.0,
                           duration: model.duration,
-                          child: Opacity(
-                                  opacity: model.opacity,
-                                  child: model.container,
-                                ),
+                          child: model.container,
                         ),
                       )
                     : Container())
@@ -108,7 +100,6 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
   Future<void> runAddToCartAnimation(GlobalKey widgetKey) async {
     _PositionedAnimationModel animationModel = _PositionedAnimationModel()
       .. destScale = widget.destScale
-      ..opacity = widget.opacity
       ..offsetX = widget.offsetX
       ..offsetY = widget.offsetY
     ;
