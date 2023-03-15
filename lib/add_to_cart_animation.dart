@@ -18,6 +18,8 @@ class _PositionedAnimationModel {
   Duration duration = Duration.zero;
   Curve curve = Curves.easeInOut;
   double destScale = 0.5;
+  double offsetX = 0.0;
+  double offsetY = 0.0;
 }
 
 /// An add to cart animation which provide you an animation by sliding the product to cart in the Flutter app
@@ -37,6 +39,9 @@ class AddToCartAnimation extends StatefulWidget {
 
   final double destScale;
 
+  final double offsetX;
+  final double offsetY;
+
   /// The animation options while given widget sliding to cart
   final DragToCartAnimationOptions dragAnimation;
 
@@ -47,6 +52,8 @@ class AddToCartAnimation extends StatefulWidget {
     required this.createAddToCartAnimation,
     this.opacity = 0.85,
     this.destScale = 0.5,
+    this.offsetX = 0.0,
+    this.offsetY = 0.0,
     this.dragAnimation = const DragToCartAnimationOptions(),
   }) : super(key: key);
 
@@ -74,9 +81,9 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
                 .map<Widget>((model) => model.showAnimation
                     ? AnimatedPositioned(
                         top: model.animationActive
-                            ? model.imageDestPoint.dx
-                            : model.imageSourcePoint.dx,
-                        left: model.imageSourcePoint.dy,
+                            ? model.imageDestPoint.dy + model.offsetY
+                            : model.imageSourcePoint.dy,
+                        left: model.animationActive ? (model.imageDestPoint.dx - model.imageSourceSize.width / 2 * model.destScale + model.offsetX) : model.imageSourcePoint.dx,
                         height: model.imageSourceSize.height,
                         width: model.imageSourceSize.width,
                         duration: model.duration,
@@ -101,19 +108,25 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
   Future<void> runAddToCartAnimation(GlobalKey widgetKey) async {
     _PositionedAnimationModel animationModel = _PositionedAnimationModel()
       .. destScale = widget.destScale
-      ..opacity = widget.opacity;
+      ..opacity = widget.opacity
+      ..offsetX = widget.offsetX
+      ..offsetY = widget.offsetY
+    ;
 
     animationModel.imageSourcePoint = Offset(
-        widgetKey.globalPaintBounds!.top, widgetKey.globalPaintBounds!.left);
+      widgetKey.globalPaintBounds!.left,
+      widgetKey.globalPaintBounds!.top,
+    );
 
-/*
     animationModel.imageDestPoint = Offset(
-        widgetKey.globalPaintBounds!.top + this.widget.cartKey.currentContext!.size!.height*10,
-        widgetKey.globalPaintBounds!.left + this.widget.cartKey.currentContext!.size!.width*10);
-*/
+      this.widget.cartKey.globalPaintBounds!.left,
+      this.widget.cartKey.globalPaintBounds!.top,
+    );
 
-    animationModel.imageSourceSize = Size(widgetKey.currentContext!.size!.width,
-        widgetKey.currentContext!.size!.height);
+    animationModel.imageSourceSize = Size(
+        widgetKey.currentContext!.size!.width,
+        widgetKey.currentContext!.size!.height
+    );
 
     animationModels.add(animationModel);
     // Improvement/Suggestion 2: Changing the animationModel.child from Image to gkImageContainer
@@ -137,14 +150,9 @@ class _AddToCartAnimationState extends State<AddToCartAnimation> {
         widget.dragAnimation.duration; // this is for add to button mode
 
     animationModel.imageDestPoint = Offset(
-        this.widget.cartKey.globalPaintBounds!.top /*- widgetKey.globalPaintBounds!.top*/,
-        this.widget.cartKey.globalPaintBounds!.left);
-
-/*
-    animationModel.imageDestSize = Size(
-        this.widget.cartKey.currentContext!.size!.width,
-        this.widget.cartKey.currentContext!.size!.height);
-*/
+        this.widget.cartKey.globalPaintBounds!.left,
+        this.widget.cartKey.globalPaintBounds!.top,
+      );
 
     setState(() {});
 
